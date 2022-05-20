@@ -25,10 +25,10 @@ async function checkFiles() {
     }
 }
 
-function copyDir () {
-    makeDirectory();
-    copyFiles();
-    checkFiles();
+async function copyDir () {
+    await makeDirectory();
+    await copyFiles();
+    await checkFiles();
 }
 
 copyDir();
