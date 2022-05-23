@@ -16,3 +16,7 @@ stdin.on('data', data => {
         writeStream.write(input);
     }
 });
+process.on('SIGINT', () => {
+    stdout.write('Good luck!');
+    process.exit();
+})
