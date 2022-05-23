@@ -2,33 +2,41 @@ const fs = require('fs');
 const path = require('path');
 const fsPromises = require('fs/promises');
 
-async function makeDirectory() {
-    const newDir = await fsPromises.mkdir(path.join(__dirname, 'files-copy'), { recursive: true });
+async function makeDirectory(source, destination) {
+    fs.stat(source, (err, stats) => {
+        if (stats.isDirectory()){
+            fsPromises.mkdir(destination, { recursive: true });
+        }
+    });
 }
-
-async function copyFiles() {
-    const readFolder = await fsPromises.readdir(path.join(__dirname, 'files'));
+async function copyFiles(source, destination) {
+    const readFolder = await fsPromises.readdir(source);
     for (const file of readFolder) {
-        await fsPromises.copyFile(path.join(__dirname, 'files',  file), path.join(__dirname, 'files-copy', file));
+        fs.stat(path.join(source, file), (err, stats) => {
+            if (stats.isDirectory()){
+                copyDir(path.join(source, file), path.join(destination, file));
+            } else {
+                fsPromises.copyFile(path.join(source, file), path.join(destination, file));
+            }
+        })
     }
 }
-
-async function checkFiles() {
-    const readFolder = await fsPromises.readdir(path.join(__dirname, 'files-copy'));
+async function checkFiles(source, destination) {
+    const readFolder = await fsPromises.readdir(destination);
     for (const file of readFolder) {
-        const compareFiles = await fsPromises.readdir(path.join(__dirname, 'files'));
+        const compareFiles = await fsPromises.readdir(source);
         if (!compareFiles.includes(file)) {
-            fs.unlink(path.join(__dirname, 'files-copy', file), (err) => {
-                if (err) { console.log(`Can't delete ${path.join(__dirname, 'files-copy', file)} file`); };
+            fs.rm(path.join(destination, file), { recursive:true }, (err) => {
+                if (err) { console.log(`Can't delete ${path.join(destination, file)} file`); };
             });
         }
     }
 }
 
-async function copyDir () {
-    await makeDirectory();
-    await copyFiles();
-    await checkFiles();
+async function copyDir(source, destination) {
+    await makeDirectory(source, destination);
+    await copyFiles(source, destination);
+    await checkFiles(source, destination);
 }
 
-copyDir();
+copyDir(path.join(__dirname, 'files'), path.join(__dirname, 'files-copy'));
